@@ -13,12 +13,15 @@ st.set_page_config(page_title="Snowflake Arctic")
 with st.sidebar:
     st.title('Snowflake Arctic')
     if 'REPLICATE_API_TOKEN' in st.secrets:
+        #st.success('API token loaded!', icon='✅')
         replicate_api = st.secrets['REPLICATE_API_TOKEN']
     else:
         replicate_api = st.text_input('Enter Replicate API token:', type='password')
         if not (replicate_api.startswith('r8_') and len(replicate_api)==40):
             st.warning('Please enter your Replicate API token.', icon='⚠️')
             st.markdown("**Don't have an API token?** Head over to [Replicate](https://replicate.com) to sign up for one.")
+        #else:
+        #    st.success('API token loaded!', icon='✅')
 
     os.environ['REPLICATE_API_TOKEN'] = replicate_api
     st.subheader("Adjust model parameters")
@@ -36,10 +39,9 @@ for message in st.session_state.messages:
 
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "Hi. I'm Arctic, a new, efficient, intelligent, and truly open language model created by Snowflake AI Research. Ask me anything."}]
-
 st.sidebar.button('Clear chat history', on_click=clear_chat_history)
+
 st.sidebar.caption('Built by [Snowflake](https://snowflake.com/) to demonstrate [Snowflake Arctic](https://www.snowflake.com/blog/arctic-open-and-efficient-foundation-language-models-snowflake). App hosted on [Streamlit Community Cloud](https://streamlit.io/cloud). Model hosted by [Replicate](https://replicate.com/snowflake/snowflake-arctic-instruct).')
-st.sidebar.caption('Build your own app powered by Arctic and [enter to win](https://arctic-streamlit-hackathon.devpost.com/) $10k in prizes.')
 
 @st.cache_resource(show_spinner=False)
 def get_tokenizer():
