@@ -8,8 +8,19 @@ st.set_page_config(page_title="Hackathon - The Future of AI is Open",
                    }
 )
 
-"""## The Future of AI is Open
-### Hackathon
+"""## Data Insight App
+### Introduction
+
+The Data Insight App is a powerful tool for analyzing data. 
+Whether you’re a data scientist, business analyst, or curious explorer, 
+this app provides a user-friendly interface to explore, manipulate, and gain insights from your datasets.
+
+#### Key Features:
+
+1. **Analysing data files with LLM** allows you to analyse data files. Supported data formats are CSV, Apache Parquet and JSON.
+
+
+
 
 """
 

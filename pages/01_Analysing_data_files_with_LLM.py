@@ -11,6 +11,14 @@ st.set_page_config(page_title="Hackathon - The Future of AI is Open",
                    }
 )
 
+st.markdown("## Analysing data files with LLM")
+
+with st.expander("About this section..."):
+    st.markdown("LLM (Large Language Models) they are revolutionizing data analysis. This section allows you to analyse data files. Supported data formats are:") 
+    st.markdown("* **CSV**: are commonly used for tabular data storage. They consist of rows and columns, where each row represents a record, and each column represents a field.")
+    st.markdown("* **Apache Parquet**: is a columnar storage format optimized for analytics. It’s efficient for large datasets and supports nested structures.")
+    st.markdown("* **JSON**: is a flexible format for representing structured data. It’s widely used for APIs, configuration files, and NoSQL databases.")
+
 class SampleData:
     """
     Class to generate sample data
@@ -107,7 +115,7 @@ if uploaded_file is not None:
     header_data = True
     
     if option_format == "CSV":       
-        
+                
         if sample_data:
             df = uploaded_file.load_sample_data()
             string_data = df.to_string()
@@ -126,6 +134,9 @@ if uploaded_file is not None:
                 df = pd.read_csv(data)
         
     elif option_format == "Apache Parquet":
+        
+        st.write("CSV files are commonly used for tabular data storage. They consist of rows and columns, where each row represents a record, and each column represents a field.")
+
         if sample_data:
             df = uploaded_file.load_sample_data()
             string_data = df.to_string()
