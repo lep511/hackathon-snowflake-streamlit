@@ -1,97 +1,136 @@
 import streamlit as st
+import pandas as pd
+from io import StringIO
 import replicate
-import os
-from transformers import AutoTokenizer
-
-# Set assistant icon to Snowflake logo
-icons = {"assistant": "./Snowflake_Logomark_blue.svg", "user": "⛷️"}
+import time
 
 # App title
 st.set_page_config(page_title="Snowflake Arctic")
 
-# Replicate Credentials
+def generate_llm_data(input):
+    """
+    Generate LLM data
+        :param input: Input to LLM
+        :type input: str
+        :return: Status of LLM and data
+        :rtype: tuple
+    """
+    with st.spinner('LLM data generation...'):  
+        prediction = replicate.models.predictions.create(
+            "snowflake/snowflake-arctic-instruct",
+            input=input
+        )
+        for i in range(5):
+            prediction.reload()
+            if prediction.status in {"succeeded", "failed", "canceled"}:
+                break
+            else:
+                time.sleep(5)
+        prediction_status = prediction.status
+        prediction_data = prediction.output
+    
+    return prediction_status, prediction_data
+
+# Generate sidebar
+####################################################
 with st.sidebar:
     st.title('Snowflake Arctic')
+    st.image('logo.jpg', use_column_width="always")
     if 'REPLICATE_API_TOKEN' in st.secrets:
-        #st.success('API token loaded!', icon='✅')
+        st.divider()
         replicate_api = st.secrets['REPLICATE_API_TOKEN']
     else:
-        replicate_api = st.text_input('Enter Replicate API token:', type='password')
-        if not (replicate_api.startswith('r8_') and len(replicate_api)==40):
-            st.warning('Please enter your Replicate API token.', icon='⚠️')
-            st.markdown("**Don't have an API token?** Head over to [Replicate](https://replicate.com) to sign up for one.")
-        #else:
-        #    st.success('API token loaded!', icon='✅')
+        st.error('API token could not be loaded', icon='🚨')
 
-    os.environ['REPLICATE_API_TOKEN'] = replicate_api
-    st.subheader("Adjust model parameters")
-    temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=5.0, value=0.3, step=0.01)
-    top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
+# Store LLM-status
+if "status_llm" not in st.session_state.keys():
+    st.session_state.status_llm = {
+                        "csv_file": None,
+                        "status_header": "not_started", 
+                        "status_not_header": "not_started", 
+                        "prediction_header_data": None,
+                        "prediction_no_header_data": None,
+                        "prediction_vis_data": None
+    }
 
-# Store LLM-generated responses
-if "messages" not in st.session_state.keys():
-    st.session_state.messages = [{"role": "assistant", "content": "Hi. I'm Arctic, a new, efficient, intelligent, and truly open language model created by Snowflake AI Research. Ask me anything."}]
+no_csv_header = st.toggle("The CSV file does not contain a header.")
+uploaded_file = st.file_uploader("Choose a CSV file (max. 200MB)", type="csv")
 
-# Display or clear chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"], avatar=icons[message["role"]]):
-        st.write(message["content"])
-
-def clear_chat_history():
-    st.session_state.messages = [{"role": "assistant", "content": "Hi. I'm Arctic, a new, efficient, intelligent, and truly open language model created by Snowflake AI Research. Ask me anything."}]
-st.sidebar.button('Clear chat history', on_click=clear_chat_history)
-
-st.sidebar.caption('Built by [Snowflake](https://snowflake.com/) to demonstrate [Snowflake Arctic](https://www.snowflake.com/blog/arctic-open-and-efficient-foundation-language-models-snowflake). App hosted on [Streamlit Community Cloud](https://streamlit.io/cloud). Model hosted by [Replicate](https://replicate.com/snowflake/snowflake-arctic-instruct).')
-
-@st.cache_resource(show_spinner=False)
-def get_tokenizer():
-    """Get a tokenizer to make sure we're not sending too much text
-    text to the Model. Eventually we will replace this with ArcticTokenizer
-    """
-    return AutoTokenizer.from_pretrained("huggyllama/llama-7b")
-
-def get_num_tokens(prompt):
-    """Get the number of tokens in a given prompt"""
-    tokenizer = get_tokenizer()
-    tokens = tokenizer.tokenize(prompt)
-    return len(tokens)
-
-# Function for generating Snowflake Arctic response
-def generate_arctic_response():
-    prompt = []
-    for dict_message in st.session_state.messages:
-        if dict_message["role"] == "user":
-            prompt.append("<|im_start|>user\n" + dict_message["content"] + "<|im_end|>")
+# Check if file is uploaded
+############################################
+if uploaded_file is not None:        
+    # To read file as bytes:
+    bytes_data = uploaded_file.getvalue()
+    string_data=str(bytes_data,'utf-8')
+    data = StringIO(string_data)
+    st.write("First 250 rows")
+    if no_csv_header:
+        df = pd.read_csv(data, nrows=250, header=None)
+        prompt = "Explains this CSV file. Indicates what the data can be used for and what might cause problems:"
+        header_data = False
+    else:
+        df = pd.read_csv(data, nrows=250)
+        prompt = "Explains this CSV file and all its columns, indicates the potential uses of this data and which columns could cause problems:"
+        header_data = True
+    
+    st.dataframe(df)
+    
+    st.divider()
+    st.markdown("### Info CSV file")
+    input = {
+        "prompt": prompt + string_data[0:1000],
+        "temperature": 0.2
+    }
+    
+    if header_data:         # If CSV file contains header      
+        if st.session_state.status_llm["status_header"] == "not_started" or st.session_state.status_llm["csv_file"] != uploaded_file.name:
+            # Generate LLM data
+            prediction_status, prediction_data = generate_llm_data(input)
+            
+            if prediction_status == "succeeded": 
+                st.session_state.status_llm["status_header"] = "done"
+                st.markdown("".join(prediction_data))
+                st.session_state.status_llm["prediction_header_data"] = prediction_data
+            else:
+                st.error("LLM data generation failed. Try again later.")
         else:
-            prompt.append("<|im_start|>assistant\n" + dict_message["content"] + "<|im_end|>")
+            st.markdown("".join(st.session_state.status_llm["prediction_header_data"]))
     
-    prompt.append("<|im_start|>assistant")
-    prompt.append("")
-    prompt_str = "\n".join(prompt)
+    else:                   # If CSV file does not contain header
+        if st.session_state.status_llm["status_not_header"] == "not_started" or st.session_state.status_llm["csv_file"] != uploaded_file.name:
+            # Generate LLM data
+            prediction_status, prediction_data = generate_llm_data(input)
+            
+            if prediction_status == "succeeded": 
+                st.session_state.status_llm["status_not_header"] = "done"
+                st.markdown("".join(prediction_data))
+                st.session_state.status_llm["prediction_no_header_data"] = prediction_data
+            else:
+                st.error("LLM data generation failed. Try again later.")    
+        else:
+            st.markdown("".join(st.session_state.status_llm["prediction_no_header_data"]))  
+
+    st.divider()
+    st.markdown("### Data visualization techniques")
+    prompt_vis = "Discuss the pros and cons of different data visualization techniques for data analysis of this csv file in Python. Select only the ones you think are relevant."
+    input_vis = {
+        "prompt": prompt_vis + string_data[0:500],
+        "temperature": 0.2
+    }
     
-    if get_num_tokens(prompt_str) >= 3072:
-        st.error("Conversation length too long. Please keep it under 3072 tokens.")
-        st.button('Clear chat history', on_click=clear_chat_history, key="clear_chat_history")
-        st.stop()
+    # prediction_vis
+    if not st.session_state.status_llm["prediction_vis_data"] or st.session_state.status_llm["csv_file"] != uploaded_file.name:
+        prediction_status, prediction_data = generate_llm_data(input_vis)
 
-    for event in replicate.stream("snowflake/snowflake-arctic-instruct",
-                           input={"prompt": prompt_str,
-                                  "prompt_template": r"{prompt}",
-                                  "temperature": temperature,
-                                  "top_p": top_p,
-                                  }):
-        yield str(event)
+        if prediction_status == "succeeded":
+            st.session_state.status_llm["prediction_vis_data"] = prediction_data
+            st.markdown("".join(prediction_data))
+        else:
+            st.error("LLM data generation failed. Try again later.")
+    
+    else:
+        st.markdown("".join(st.session_state.status_llm["prediction_vis_data"]))  
 
-# User-provided prompt
-if prompt := st.chat_input(disabled=not replicate_api):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="⛷️"):
-        st.write(prompt)
-
-# Generate a new response if last message is not from assistant
-if st.session_state.messages[-1]["role"] != "assistant":
-    with st.chat_message("assistant", avatar="./Snowflake_Logomark_blue.svg"):
-        response = generate_arctic_response()
-        full_response = st.write_stream(response)
-    message = {"role": "assistant", "content": full_response}
-    st.session_state.messages.append(message)
+    # Store CSV file name
+    st.session_state.status_llm["csv_file"] = uploaded_file.name
+    
