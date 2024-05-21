@@ -9,6 +9,31 @@ st.set_page_config(page_title="Hackathon - The Future of AI is Open",
                    }
 )
 
+@st.cache_data
+def generate_llm_data(input):
+    """
+    Generate LLM data
+        :param input: Input to LLM
+        :type input: str
+        :return: Status of LLM and data
+        :rtype: tuple
+    """
+    with st.spinner('LLM data generation...'):  
+        prediction = replicate.models.predictions.create(
+            "snowflake/snowflake-arctic-instruct",
+            input=input
+        )
+        for i in range(3):
+            prediction.reload()
+            if prediction.status in {"succeeded", "failed", "canceled"}:
+                break
+            else:
+                time.sleep(5)
+        prediction_status = prediction.status
+        prediction_data = prediction.output
+    
+    return prediction_status, prediction_data
+
 # Generate sidebar
 ####################################################
 with st.sidebar:
@@ -23,6 +48,8 @@ if "visibility" not in st.session_state:
     st.session_state.visibility = "visible"
     st.session_state.disabled = False
 
+if 'clicked_sec1' not in st.session_state: st.session_state.clicked_sec1 = False
+
 st.markdown("## SQL or NoSQL *(or maybe both)*")
 
 with st.expander("About this section..."):
@@ -31,27 +58,88 @@ with st.expander("About this section..."):
     st.markdown("The exponential growth in semi-structured data arising from IoT, Web and mobile devices is pushing the need for data formats that can support flexible database schemas (JSON, Parquet, XML, Avro, and ORC) to move and store that data.")
     st.markdown("*Text source: [Snowflake: What Is The Difference Between Sql And Nosql?](https://www.snowflake.com/data-warehousing-difference-sql-nosql)*")
 
+
+txt_main = st.text_area(
+    "Specify how you will use the data:",
+    placeholder="e.g. Creating a database for an inventory system within a construction company.",
+    height=200,
+    key="obs"
+)
+
 col1, col2 = st.columns(2)
 with col1:
-    text_input_engine = st.text_input(
-        "Enter some text:",
-        label_visibility=st.session_state.visibility,
-        disabled=st.session_state.disabled,
-        placeholder="e.g. ",
-        key=11
+    text_input_plang = st.text_input(
+        "Programming languages to use:",
+        placeholder="e.g. Python, Java, C++",
+        key="plang"
     )
+    cloud_data = st.toggle("Use the cloud for data storage.", value=True, key=12)
+    unstr_data = st.toggle("Use unstructured data such as images, business documents, emails.", key=13)
 
 with col2:
     text_input_data = st.text_input(
-        "Enter some text:",
-        label_visibility=st.session_state.visibility,
-        disabled=st.session_state.disabled,
-        placeholder="e.g. IoT",
-        key=21
+        "Enter the source of the data:",
+        placeholder="e.g. Statistical data, census data, IoT",
+        key="source"
     )
     
-data_sizes = ["less than 50MB", "50MB-250MB", "250MB-1GB", "1GB-5GB", "5GB-20GB", "more than 20GB"]
-color = st.select_slider(
-    "Select data size:",
-    options=data_sizes
-)
+    data_size_opt = ["less than 250MB", "250MB-2GB", "2GB-10GB", "10GB-100GB", "100GB-500GB", "more than 500GB"]
+    data_size = st.select_slider(
+        "Select the data size range:",
+        value=data_size_opt[2],
+        options=data_size_opt
+    )
+
+st.divider()
+
+def click_button_1():
+    st.session_state.clicked_sec1 = True
+    
+def click_button_reset():
+    st.session_state.clicked_sec1 = False
+    st.session_state.obs = ''
+    st.session_state.plang = ''
+    st.session_state.source = ''
+
+if not st.session_state.clicked_sec1:
+    b = st.button('Generate', key=100, on_click=click_button_1)
+else:
+    b = None
+    
+    if not txt_main:
+        st.write("Using the predefined data...")
+        txt_main = "Creating a database for an inventory system within a construction company."
+    
+    prompt_gen = "Your task is to choose the best option between SQL or NoSQL according to these criteria:\n\n"
+    
+    prompt_gen += f"- The main idea of the project is {txt_main}\n"
+    
+    if cloud_data: prompt_gen += "- The data will be saved in the cloud.\n"
+    if text_input_data: prompt_gen += "- The data will be from " + text_input_data + ".\n"
+    
+    if unstr_data: prompt_gen += "- The data will be unstructured.\n"
+    else: prompt_gen += "- The data will be structured.\n"
+    
+    if text_input_plang: prompt_gen += "- The programming languages will be " + text_input_plang + ".\n"
+    prompt_gen += "- The sizes of the data will be " + data_size + ".\n\n"
+    
+    prompt_gen += "Identify areas where using SQL or NoSQL can be more efficient, faster, or consume fewer resources.\n"
+    prompt_gen += "Finally, it ends by recommending whether to use SQL, or use NoSQL, or use both."
+    
+    input = {
+        "prompt": prompt_gen,
+        "temperature": 0.9
+    }
+    
+    prediction_status, prediction_data = generate_llm_data(input)
+    
+    if prediction_status == "succeeded": 
+        st.markdown("### Generated LLM report")
+        st.markdown("".join(prediction_data))
+    else:
+        st.error("LLM data generation failed. Try again later.")
+        st.cache_data.clear()
+        st.session_state.clicked_sec2 = False
+        
+    c = st.button('Reset', key=101, type="primary", on_click=click_button_reset)
+

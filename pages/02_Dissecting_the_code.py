@@ -25,7 +25,7 @@ def generate_llm_data(input):
             "snowflake/snowflake-arctic-instruct",
             input=input
         )
-        for i in range(5):
+        for i in range(3):
             prediction.reload()
             if prediction.status in {"succeeded", "failed", "canceled"}:
                 break
@@ -108,8 +108,8 @@ else:
         prompt_sec1 += code_example
     
     if txt_observations:
-        obs = "\n\nNote the following observations:"
-        prompt_sec1 += f" {obs} {txt_observations}"
+        obs = "\n\nNote the following observations:\n"
+        prompt_sec1 += txt_observations
     
     input = {
         "prompt": prompt_sec1,
@@ -122,6 +122,7 @@ else:
         st.markdown("".join(prediction_data))
     else:
         st.error("LLM data generation failed. Try again later.")
+        st.cache_data.clear()
         st.session_state.clicked_sec1 = False
 
 
@@ -137,7 +138,7 @@ if not st.session_state.clicked_sec2:
 else:
     # The message and nested widget will remain on the page
     c = None
-    prompt_sec2 = f"Suggest improvements to optimize the performance of the provided {option_format} code snippet."
+    prompt_sec2 = f"Suggest improvements to optimize the performance of the provided {option_format} code snippet. Identify areas where the code can be made more efficient, faster, or less resource-intensive."
     prompt_sec2 += "\n\n"
     
     if txt_code:
@@ -160,6 +161,7 @@ else:
         st.markdown("".join(prediction_data))
     else:
         st.error("LLM data generation failed. Try again later.")
+        st.cache_data.clear()
         st.session_state.clicked_sec2 = False
 
 
@@ -198,4 +200,5 @@ else:
         st.markdown("".join(prediction_data))
     else:
         st.error("LLM data generation failed. Try again later.")
+        st.cache_data.clear()
         st.session_state.clicked_sec3 = False

@@ -95,7 +95,7 @@ def generate_llm_data(input):
             "snowflake/snowflake-arctic-instruct",
             input=input
         )
-        for i in range(5):
+        for i in range(3):
             prediction.reload()
             if prediction.status in {"succeeded", "failed", "canceled"}:
                 break
@@ -218,6 +218,7 @@ if uploaded_file is not None:
                 st.session_state.status_llm["prediction_header_data"] = prediction_data_formatted
             else:
                 st.error("LLM data generation failed. Try again later.")
+                st.cache_data.clear()
         else:
             st.markdown(st.session_state.status_llm["prediction_header_data"])
                 
@@ -232,7 +233,8 @@ if uploaded_file is not None:
                 st.markdown(prediction_data_formatted)
                 st.session_state.status_llm["prediction_no_header_data"] = prediction_data_formatted
             else:
-                st.error("LLM data generation failed. Try again later.")    
+                st.error("LLM data generation failed. Try again later.")   
+                st.cache_data.clear() 
         else:
             st.markdown(st.session_state.status_llm["prediction_no_header_data"]) 
 
@@ -255,6 +257,7 @@ if uploaded_file is not None:
             st.markdown(prediction_data_formatted)
         else:
             st.error("LLM data generation failed. Try again later.")
+            st.cache_data.clear()
     
     else:
         st.markdown(st.session_state.status_llm["prediction_sec_data"]) 
@@ -278,6 +281,7 @@ if uploaded_file is not None:
             st.markdown(prediction_data_formatted)
         else:
             st.error("LLM data generation failed. Try again later.")
+            st.cache_data.clear()
     
     else:
         st.markdown(st.session_state.status_llm["prediction_vis_data"])
