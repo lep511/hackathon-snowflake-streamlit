@@ -57,7 +57,7 @@ with st.sidebar:
         st.error('API token could not be loaded', icon='🚨')
 
 
-if 'clicked_sec1' not in st.session_state: st.session_state.clicked_sec1 = False
+if 'clicked_sec800' not in st.session_state: st.session_state.clicked_sec800 = False
 
 uns_text_example = "Yesterday Michael bought 2 apples and 3 oranges at the store. Jenna bought 12 oranges, 4 kiwis, and 2 melons."
 
@@ -69,13 +69,13 @@ uns_data = st.text_area(
 )
 
 def click_button_1():
-    st.session_state.clicked_sec1 = True
+    st.session_state.clicked_sec800 = True
 
 def click_button_reset():
-    st.session_state.clicked_sec1 = False
+    st.session_state.clicked_sec800 = False
     st.session_state.uns_data = ''
 
-if not st.session_state.clicked_sec1:
+if not st.session_state.clicked_sec800:
     b = st.button('Generate', key=1, on_click=click_button_1)
 else:
     b = None
@@ -109,7 +109,7 @@ else:
     else:
         st.error("LLM data generation failed. Try again later.")
         st.cache_data.clear()
-        st.session_state.clicked_sec2 = False
+        st.session_state.clicked_sec800 = False
     
     
     c = st.button('Reset', key=101, type="primary", on_click=click_button_reset)

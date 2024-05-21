@@ -48,7 +48,7 @@ if "visibility" not in st.session_state:
     st.session_state.visibility = "visible"
     st.session_state.disabled = False
 
-if 'clicked_sec1' not in st.session_state: st.session_state.clicked_sec1 = False
+if 'clicked_sec500' not in st.session_state: st.session_state.clicked_sec500 = False
 
 st.markdown("## SQL or NoSQL *(or maybe both)*")
 
@@ -93,15 +93,15 @@ with col2:
 st.divider()
 
 def click_button_1():
-    st.session_state.clicked_sec1 = True
+    st.session_state.clicked_sec500 = True
     
 def click_button_reset():
-    st.session_state.clicked_sec1 = False
+    st.session_state.clicked_sec500 = False
     st.session_state.obs = ''
     st.session_state.plang = ''
     st.session_state.source = ''
 
-if not st.session_state.clicked_sec1:
+if not st.session_state.clicked_sec500:
     b = st.button('Generate', key=100, on_click=click_button_1)
 else:
     b = None
@@ -139,7 +139,7 @@ else:
     else:
         st.error("LLM data generation failed. Try again later.")
         st.cache_data.clear()
-        st.session_state.clicked_sec2 = False
+        st.session_state.clicked_sec500 = False
         
     c = st.button('Reset', key=101, type="primary", on_click=click_button_reset)
 

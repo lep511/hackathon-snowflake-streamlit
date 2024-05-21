@@ -49,14 +49,14 @@ with st.sidebar:
     else:
         st.error('API token could not be loaded', icon='🚨')
 
-if 'clicked_sec1' not in st.session_state: st.session_state.clicked_sec1 = False
-if 'clicked_sec2' not in st.session_state: st.session_state.clicked_sec2 = False
-if 'clicked_sec3' not in st.session_state: st.session_state.clicked_sec3 = False
+if 'clicked_sec101' not in st.session_state: st.session_state.clicked_sec101 = False
+if 'clicked_sec102' not in st.session_state: st.session_state.clicked_sec102 = False
+if 'clicked_sec103' not in st.session_state: st.session_state.clicked_sec103 = False
     
 def option_func():
-    st.session_state.clicked_sec1 = False
-    st.session_state.clicked_sec2 = False
-    st.session_state.clicked_sec3 = False
+    st.session_state.clicked_sec101 = False
+    st.session_state.clicked_sec102 = False
+    st.session_state.clicked_sec103 = False
     st.session_state.obs = ''
 
 option_format = st.selectbox(
@@ -69,12 +69,12 @@ sql_example = SQLExamples()
 code_example = sql_example.get_sql_example(option_format)
 
 def click_button_1():
-    st.session_state.clicked_sec1 = True
+    st.session_state.clicked_sec101 = True
     
 def enable_generate_button():
-    st.session_state.clicked_sec1 = False
-    st.session_state.clicked_sec2 = False
-    st.session_state.clicked_sec3 = False
+    st.session_state.clicked_sec101 = False
+    st.session_state.clicked_sec102 = False
+    st.session_state.clicked_sec103 = False
 
 txt_code = st.text_area(
     "Code to analyze",
@@ -94,7 +94,7 @@ txt_observations = st.text_area(
 st.divider()
 st.markdown("#### Explain the code")
 
-if not st.session_state.clicked_sec1:
+if not st.session_state.clicked_sec101:
     b = st.button('Generate', key=1, on_click=click_button_1)
 else:
     # The message and nested widget will remain on the page
@@ -123,7 +123,7 @@ else:
     else:
         st.error("LLM data generation failed. Try again later.")
         st.cache_data.clear()
-        st.session_state.clicked_sec1 = False
+        st.session_state.clicked_sec101 = False
 
 
 # PART 2 ############################################################
@@ -131,9 +131,9 @@ st.divider()
 st.markdown("#### Suggest code improvements to optimize performance.")
 
 def click_button_2():
-    st.session_state.clicked_sec2 = True
+    st.session_state.clicked_sec102 = True
 
-if not st.session_state.clicked_sec2:
+if not st.session_state.clicked_sec102:
     c = st.button('Generate', key=2, on_click=click_button_2)
 else:
     # The message and nested widget will remain on the page
@@ -162,7 +162,7 @@ else:
     else:
         st.error("LLM data generation failed. Try again later.")
         st.cache_data.clear()
-        st.session_state.clicked_sec2 = False
+        st.session_state.clicked_sec102 = False
 
 
 # PART 3 ############################################################
@@ -170,9 +170,9 @@ st.divider()
 st.markdown("#### Suggestions to reduce costs.")
 
 def click_button_3():
-    st.session_state.clicked_sec3 = True
+    st.session_state.clicked_sec103 = True
     
-if not st.session_state.clicked_sec3:
+if not st.session_state.clicked_sec103:
     d = st.button('Generate', key=3, on_click=click_button_3)
 else:
     # The message and nested widget will remain on the page
@@ -201,4 +201,4 @@ else:
     else:
         st.error("LLM data generation failed. Try again later.")
         st.cache_data.clear()
-        st.session_state.clicked_sec3 = False
+        st.session_state.clicked_sec103 = False
