@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
-from io import StringIO, BytesIO
 import replicate
+from markdown_pdf import MarkdownPdf, Section
+from io import StringIO, BytesIO
+import uuid
+from datetime import datetime
 import time
 
 # App title
@@ -18,6 +21,7 @@ with st.expander("About this section..."):
     st.markdown("* **CSV**: are commonly used for tabular data storage. They consist of rows and columns, where each row represents a record, and each column represents a field.")
     st.markdown("* **Apache Parquet**: is a columnar storage format optimized for analytics. It’s efficient for large datasets and supports nested structures.")
     st.markdown("* **JSON**: is a flexible format for representing structured data. It’s widely used for APIs, configuration files, and NoSQL databases.")
+    st.markdown("**IMPORTANT: Avoid uploading files with confidential data or that may affect third parties.**")
 
 class SampleData:
     """
@@ -40,6 +44,44 @@ class SampleData:
 
         return self.sample_data
 
+
+def generate_pdf(file_name, text_md):
+    """Generate a PDF file from the text
+
+    Parameters
+    ----------
+    text_md : str
+        Text to be converted to PDF
+    """
+    # Create a new MarkdownPdf object
+    pdf = MarkdownPdf(toc_level=2)
+    
+    # Get the current date and time
+    now = datetime.now()
+    actual_date = now.strftime("%Y-%m-%d - %H:%M:%S")
+    
+    # PDF Titles
+    title = f'<div style="text-align: right"> {actual_date} </div><br>'
+    subtitle = f'<div style="font-style: italic"> {file_name} </div>\n\n'
+    
+    text_md_compose = title + subtitle
+    text_md_compose += '__________\n\n'
+    text_md_compose += text_md
+    # Create a new section
+    pdf.add_section(Section(text_md_compose, toc=False))
+    
+    # Set the title of the PDF
+    pdf.meta["title"] = f"Analysis of {file_name}"
+    file_pdf = "data-analysis-temp.pdf"
+    # Save the PDF file
+    pdf.save(file_pdf)
+    
+    with open(file_pdf, "rb") as f:
+        pdf_data = f.read()
+            
+    return pdf_data
+
+@st.cache_data
 def generate_llm_data(input):
     """
     Generate LLM data
@@ -159,7 +201,7 @@ if uploaded_file is not None:
     st.dataframe(df)
     
     st.divider()
-    st.markdown(f"### Info {option_format} file")
+    st.markdown(f"### {option_format} file data analysis")
     input = {
         "prompt": prompt + string_data[0:1000],
         "temperature": 0.2
@@ -172,13 +214,14 @@ if uploaded_file is not None:
             
             if prediction_status == "succeeded": 
                 st.session_state.status_llm["status_header"] = "done"
-                st.markdown("".join(prediction_data))
-                st.session_state.status_llm["prediction_header_data"] = prediction_data
+                prediction_data_formatted = "".join(prediction_data)
+                st.markdown(prediction_data_formatted)
+                st.session_state.status_llm["prediction_header_data"] = prediction_data_formatted
             else:
                 st.error("LLM data generation failed. Try again later.")
         else:
-            st.markdown("".join(st.session_state.status_llm["prediction_header_data"]))
-    
+            st.markdown(st.session_state.status_llm["prediction_header_data"])
+                
     else:                   # If CSV file does not contain header
         if st.session_state.status_llm["status_not_header"] == "not_started" or st.session_state.status_llm["data_file"] != uploaded_file.name:
             # Generate LLM data
@@ -186,12 +229,13 @@ if uploaded_file is not None:
             
             if prediction_status == "succeeded": 
                 st.session_state.status_llm["status_not_header"] = "done"
-                st.markdown("".join(prediction_data))
-                st.session_state.status_llm["prediction_no_header_data"] = prediction_data
+                prediction_data_formatted = "".join(prediction_data)
+                st.markdown(prediction_data_formatted)
+                st.session_state.status_llm["prediction_no_header_data"] = prediction_data_formatted
             else:
                 st.error("LLM data generation failed. Try again later.")    
         else:
-            st.markdown("".join(st.session_state.status_llm["prediction_no_header_data"]))  
+            st.markdown(st.session_state.status_llm["prediction_no_header_data"]) 
 
 
     st.divider()
@@ -207,13 +251,14 @@ if uploaded_file is not None:
         prediction_status, prediction_data = generate_llm_data(input_sec)
 
         if prediction_status == "succeeded":
-            st.session_state.status_llm["prediction_sec_data"] = prediction_data
-            st.markdown("".join(prediction_data))
+            prediction_data_formatted = "".join(prediction_data)
+            st.session_state.status_llm["prediction_sec_data"] = prediction_data_formatted
+            st.markdown(prediction_data_formatted)
         else:
             st.error("LLM data generation failed. Try again later.")
     
     else:
-        st.markdown("".join(st.session_state.status_llm["prediction_sec_data"]))  
+        st.markdown(st.session_state.status_llm["prediction_sec_data"]) 
     
     
     st.divider()
@@ -229,15 +274,48 @@ if uploaded_file is not None:
         prediction_status, prediction_data = generate_llm_data(input_vis)
 
         if prediction_status == "succeeded":
-            st.session_state.status_llm["prediction_vis_data"] = prediction_data
-            st.markdown("".join(prediction_data))
+            prediction_data_formatted = "".join(prediction_data)
+            st.session_state.status_llm["prediction_vis_data"] = prediction_data_formatted
+            st.markdown(prediction_data_formatted)
         else:
             st.error("LLM data generation failed. Try again later.")
     
     else:
-        st.markdown("".join(st.session_state.status_llm["prediction_vis_data"]))  
+        st.markdown(st.session_state.status_llm["prediction_vis_data"])
 
-    # Store CSV file name
+    st.divider()
+
+  
     if not sample_data:
-        st.session_state.status_llm["data_file"] = uploaded_file.name
+        # Store CSV file name
+        st.session_state.status_llm["data_file"] = uploaded_file.name  
+  
+        # Join all generated results into a single element
+        all_generated_data = ""
+        all_generated_data += f"## {option_format} file data analysis\n"
+        
+        if header_data:
+            all_generated_data += st.session_state.status_llm["prediction_header_data"]
+        else:
+            all_generated_data += st.session_state.status_llm["prediction_no_header_data"]
+        
+        all_generated_data += "\n\n"
+        all_generated_data += "## Security issues\n"
+        all_generated_data += st.session_state.status_llm["prediction_sec_data"]
+        all_generated_data += "\n\n"
+        all_generated_data += "## Data visualization techniques\n"
+        all_generated_data += st.session_state.status_llm["prediction_vis_data"]
+                
+        pdf = generate_pdf(uploaded_file.name, all_generated_data)
+        id4 = uuid.uuid4()
+        file_pdf = f"data-analysis-{id4}.pdf"
+        
+        st.download_button(
+            label="Download the PDF report",
+            data=pdf,
+            file_name=file_pdf,
+            mime="application/pdf"
+        )
     
+       
+        
