@@ -118,7 +118,7 @@ if uploaded_file is not None:
                 
         if sample_data:
             df = uploaded_file.load_sample_data()
-            string_data = df.to_string()
+            string_data = df.to_string(index=False)
             
         else:
             # To read file as bytes:
@@ -139,17 +139,17 @@ if uploaded_file is not None:
 
         if sample_data:
             df = uploaded_file.load_sample_data()
-            string_data = df.to_string()
+            string_data = df.to_string(index=False)
         else:
             bytes_data = uploaded_file.getvalue()
             data = BytesIO(bytes_data)
             df = pd.read_parquet(data)
-            string_data = df.to_string()
+            string_data = df.to_string(index=False)
         
     elif option_format == "JSON":
         if sample_data:
             df = uploaded_file.load_sample_data()
-            string_data = df.to_string()
+            string_data = df.to_string(index=False)
         else:
             bytes_data = uploaded_file.getvalue()
             string_data=str(bytes_data,'utf-8')
