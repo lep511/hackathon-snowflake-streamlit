@@ -23,6 +23,18 @@ this app provides a user-friendly interface to explore, manipulate, and gain ins
 
 3. **SQL or NoSQL**: Assists in choosing between SQL and NoSQL databases, considering factors like structured and semi-structured data growth from IoT, web, and mobile sources.
 
+4. **Unstructured text to JSON**: Turn unstructured text into bespoke JSON tables.
+
+
+#### Used tools:
+
+* [Streamlit](https://streamlit.io/) - A faster way to build and share data apps
+
+* [Snowflake Arctic](https://arctic.streamlit.app/) - An efficient, intelligent, and truly open-source language model
+
+* [REPLICATE](https://replicate.com/) - Making machine learning accessible to every software developer.
+
+* [markdown-pdf](https://pypi.org/project/markdown-pdf/) - The free, open source Python module markdown-pdf will create a PDF file from your content in markdown format.
 
 """
 
