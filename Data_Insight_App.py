@@ -17,9 +17,11 @@ this app provides a user-friendly interface to explore, manipulate, and gain ins
 
 #### Key Features:
 
-1. **Analysing data files with LLM** allows you to analyse data files. Supported data formats are CSV, Apache Parquet and JSON.
+1. **Analysing data files with LLM**: allows you to analyse data files. Supported data formats are CSV, Apache Parquet and JSON.
 
+2. **Dissecting the code**: allows you to enter a code in SQL and choose between different data managers and obtain different action points to improve the code.
 
+3. **SQL or NoSQL**: Assists in choosing between SQL and NoSQL databases, considering factors like structured and semi-structured data growth from IoT, web, and mobile sources.
 
 
 """
@@ -27,4 +29,7 @@ this app provides a user-friendly interface to explore, manipulate, and gain ins
 # Generate sidebar
 ####################################################
 with st.sidebar:
-    st.image('images/logo.jpg', use_column_width="always")
+    try:
+        st.image('images/logo.jpg', use_column_width="always", caption="Hackathon - The Future of AI is Open")
+    except:
+        st.error('Image logo.jpg not found', icon="🚨")

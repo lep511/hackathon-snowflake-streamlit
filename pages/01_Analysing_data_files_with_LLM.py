@@ -110,12 +110,11 @@ def generate_llm_data(input):
 ####################################################
 with st.sidebar:
     try:
-        st.image('images/logo.jpg', use_column_width="always")
+        st.image('images/logo.jpg', use_column_width="always", caption="Hackathon - The Future of AI is Open")
     except:
         st.error('Image logo.jpg not found', icon="🚨")
     
     if 'REPLICATE_API_TOKEN' in st.secrets:
-        st.divider()
         replicate_api = st.secrets['REPLICATE_API_TOKEN']
     else:
         st.error('API token could not be loaded', icon='🚨')
