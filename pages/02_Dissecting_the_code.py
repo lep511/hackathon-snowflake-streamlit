@@ -2,12 +2,22 @@ import streamlit as st
 import replicate
 from sqlexamples import SQLExamples
 import time
+import os
 
 st.set_page_config(page_title="Hackathon - The Future of AI is Open",
                    menu_items={
                        'About': "This is a demo app for the Hackathon - **The Future of AI is Open**"
                    }
 )
+
+if 'REPLICATE_API_TOKEN' in st.session_state:  
+    api_token = st.session_state['REPLICATE_API_TOKEN']
+    os.environ["REPLICATE_API_TOKEN"] = st.session_state['REPLICATE_API_TOKEN']
+
+else:  
+    api_token = "Enter the token"
+    st.error('Enter the [Replicate api token](https://replicate.com/account/api-tokens)', icon='🚨')
+    
 
 st.markdown("## Dissecting the code with LLM")
 
@@ -20,35 +30,39 @@ def generate_llm_data(input):
         :return: Status of LLM and data
         :rtype: tuple
     """
-    with st.spinner('LLM data generation...'):  
-        prediction = replicate.models.predictions.create(
-            "snowflake/snowflake-arctic-instruct",
-            input=input
-        )
-        for i in range(3):
-            prediction.reload()
-            if prediction.status in {"succeeded", "failed", "canceled"}:
-                break
-            else:
-                time.sleep(5)
-        prediction_status = prediction.status
-        prediction_data = prediction.output
-    
-    return prediction_status, prediction_data
+    try:
+        with st.spinner('LLM data generation...'):  
+            prediction = replicate.models.predictions.create(
+                "snowflake/snowflake-arctic-instruct",
+                input=input
+            )
+            for i in range(3):
+                prediction.reload()
+                if prediction.status in {"succeeded", "failed", "canceled"}:
+                    break
+                else:
+                    time.sleep(5)
+            prediction_status = prediction.status
+            prediction_data = prediction.output
+        
+        return prediction_status, prediction_data
+    except:
+        return False, False
 
 # Generate sidebar
 ####################################################
 with st.sidebar:
+    token = st.text_input("Replicate api token", value=api_token, type="password")
+    if token:
+        api_token = token
+        st.session_state['REPLICATE_API_TOKEN'] = token
+        os.environ["REPLICATE_API_TOKEN"] = token
+    
     try:
         st.image('images/logo.jpg', use_column_width="always", caption="Hackathon - The Future of AI is Open")
     except:
         st.error('Image logo.jpg not found', icon="🚨")
         
-    if 'REPLICATE_API_TOKEN' in st.secrets:
-        replicate_api = st.secrets['REPLICATE_API_TOKEN']
-    else:
-        st.error('API token could not be loaded', icon='🚨')
-
 if 'clicked_sec101' not in st.session_state: st.session_state.clicked_sec101 = False
 if 'clicked_sec102' not in st.session_state: st.session_state.clicked_sec102 = False
 if 'clicked_sec103' not in st.session_state: st.session_state.clicked_sec103 = False

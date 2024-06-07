@@ -8,6 +8,15 @@ st.set_page_config(page_title="Hackathon - The Future of AI is Open",
                    }
 )
 
+if 'REPLICATE_API_TOKEN' in st.session_state:  
+    api_token = st.session_state['REPLICATE_API_TOKEN']
+    os.environ["REPLICATE_API_TOKEN"] = st.session_state['REPLICATE_API_TOKEN']
+
+else:  
+    api_token = "Enter the token"
+    st.error('Enter the [Replicate api token](https://replicate.com/account/api-tokens)', icon='🚨')
+
+
 """## Data Insight App
 ### Introduction
 
@@ -41,6 +50,13 @@ this app provides a user-friendly interface to explore, manipulate, and gain ins
 # Generate sidebar
 ####################################################
 with st.sidebar:
+
+    token = st.text_input("Replicate api token", value=api_token, type="password")
+    if token:
+        api_token = token
+        st.session_state['REPLICATE_API_TOKEN'] = token
+        os.environ["REPLICATE_API_TOKEN"] = token
+
     try:
         st.image('images/logo.jpg', use_column_width="always", caption="Hackathon - The Future of AI is Open")
     except:
